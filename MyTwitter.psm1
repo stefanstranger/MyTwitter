@@ -254,7 +254,7 @@ function Escape-SpecialCharacters
 	)
 	try
 	{
-		[string[]] $specialChar = @("!", "*", "'", "(", ")")
+		[string[]] $specialChar = @("!", "*", "'", "(", ")", "#")
 		for ($i = 0; $i -lt $specialChar.Length; $i++)
 		{
 			$Message = $Message.Replace($specialChar[$i], [System.Uri]::HexEscape($specialChar[$i]))
@@ -393,11 +393,11 @@ Function Split-Tweet {
         [string]$Message
     )
 
-  [int]$Length = 130
+  [int]$Length = 118
   #Check length of Tweet
   if ($Message.length -gt $Length)
   {
-    Write-Verbose 'Message needs to be splitted'
+    Write-Verbose 'Message needs to be split'
     #Total length of message
     Write-Verbose "Length of message is $($message.length)"
     #Calculate number message
@@ -519,6 +519,60 @@ Function Get-ShortURL {
     return $shortenedURL;
 }
 
+
+########################################################################################################################
+# New-PSTweet
+# Function for the PowerShell MyTwitter module
+# To send messages with a hashtag added. Default hashtag will be #PSTweetChat
+# Date: 05/12/2015
+# Author: sqlchow
+# Version: 0.1
+# Changes: 
+#		(0.2) = 
+#		(0.3) = 
+#		(0.4) = 
+# ToDo: 
+########################################################################################################################
+Function New-PSTweet {
+  <#
+  .SYNOPSIS
+   This Function sends a tweet with a hash tag.
+  .DESCRIPTION
+   This Function sends a tweet with a hash tag. The default hashtag will be #PSTweetChat
+  .EXAMPLE
+   New-PSTweet -Message 'Welcome to PowerShell tweet chat'
+  #>
+
+	[CmdletBinding()]
+    [Alias()]
+    [OutputType([string])]
+    Param
+    (
+        # Message you want to split
+        [Parameter(
+                   HelpMessage = 'What is the message you want to send?',
+                   Mandatory = $true,
+                   Valuefrompipeline=$false,
+                   Position = 0)]
+        [string]$Message,
+        [Parameter(
+                   HelpMessage = 'What is the hashtag you want to use?',
+                   Mandatory = $false,
+                   Valuefrompipeline=$false,
+                   Position = 2)]
+        [string]$HashTag = "#PSTweetChat"
+    )
+
+    Process
+    {
+        $PSTweet = $Message -join $HashTag
+        Split-Tweet -Message $PSTweet | Select-Object @{L="Message";E={$_}} | 
+            ForEach-Object {Send-Tweet -Message $_.Message}
+    }
+  
+}
+
+Export-ModuleMember New-PSTweet
 Export-ModuleMember Send-Tweet
 Export-ModuleMember Send-TwitterDm
 Export-ModuleMember Split-Tweet
